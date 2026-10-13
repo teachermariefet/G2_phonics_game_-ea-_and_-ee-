@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listen and Choose! - SmartBoard EFL Vocabulary Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts: Balsamiq Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Balsamiq Sans', cursive, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-indigo-950 text-white h-screen w-screen overflow-hidden flex flex-col justify-between relative">
+
+    <!-- ========================================== -->
+    <!-- HOME SCREEN                                -->
+    <!-- ========================================== -->
+    <div id="home-screen" class="absolute inset-0 z-20 flex flex-col items-center justify-between p-8 bg-cover bg-center transition-opacity duration-500" style="background-image: url('homescreen.png');">
+        <!-- Overlay for readability if background image is bright -->
+        <div class="absolute inset-0 bg-black/40 pointer-events-none"></div>
+
+        <!-- Top bar with Fullscreen Button -->
+        <div class="w-full flex justify-end z-30">
+            <button id="fullscreen-btn" onclick="toggleFullscreen()" class="bg-white/90 hover:bg-white text-indigo-900 font-bold px-5 py-3 rounded-2xl shadow-lg border-2 border-indigo-200 flex items-center gap-3 text-xl transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                Maximize Screen
+            </button>
+        </div>
+
+        <!-- Center Content -->
+        <div class="z-30 flex flex-col items-center text-center my-auto">
+            <h1 class="text-6xl md:text-8xl font-extrabold text-yellow-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-8 tracking-wide">
+                Listen and Choose!
+            </h1>
+            <p class="text-2xl md:text-3xl text-white font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mb-12">
+                Tap the words that match what you hear!
+            </p>
+            <button onclick="startGame()" class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-4xl md:text-5xl px-16 py-6 rounded-3xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] border-4 border-white transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                Start Game 🚀
+            </button>
+        </div>
+
+        <!-- Bottom Spacer -->
+        <div class="z-30"></div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- GAMEPLAY SCREEN                            -->
+    <!-- ========================================== -->
+    <div id="game-screen" class="absolute inset-0 z-10 flex flex-col justify-between p-6 bg-cover bg-center opacity-0 pointer-events-none transition-opacity duration-500" style="background-image: url('gamescreen.png');">
+        <!-- Overlay for readability -->
+        <div class="absolute inset-0 bg-black/30 pointer-events-none"></div>
+
+        <!-- Top HUD -->
+        <div class="z-20 flex justify-between items-center bg-indigo-900/80 backdrop-blur-md px-8 py-4 rounded-3xl border-4 border-indigo-300 shadow-xl">
+            <div class="flex items-center gap-4">
+                <span class="text-2xl md:text-3xl font-bold text-yellow-300">Score:</span>
+                <span id="score-display" class="text-4xl md:text-5xl font-black text-white">0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-2xl md:text-3xl font-bold text-yellow-300">Time:</span>
+                <span id="timer-display" class="text-4xl md:text-5xl font-black text-white">90</span><span class="text-2xl md:text-3xl font-bold text-white">s</span>
+            </div>
+        </div>
+
+        <!-- Center Game Area: Replay Audio & Two Choices -->
+        <div class="z-20 flex flex-col items-center justify-center my-auto gap-8">
+            <!-- Replay Audio Button -->
+            <button onclick="playTargetAudio()" class="bg-amber-500 hover:bg-amber-400 text-indigo-950 font-black text-2xl md:text-3xl px-8 py-4 rounded-2xl shadow-lg border-4 border-white flex items-center gap-3 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+                Replay Audio
+            </button>
+
+            <!-- Two Picture Choices Side by Side -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-4">
+                <button id="choice-0" onclick="handleChoice(0)" class="bg-white/90 hover:bg-white rounded-3xl p-6 shadow-2xl border-6 border-indigo-200 flex flex-col items-center justify-center transition transform hover:scale-102 active:scale-95 cursor-pointer min-h-[260px] md:min-h-[320px]">
+                    <img id="img-0" src="" alt="Choice 1" class="max-h-56 md:max-h-68 object-contain pointer-events-none">
+                </button>
+                <button id="choice-1" onclick="handleChoice(1)" class="bg-white/90 hover:bg-white rounded-3xl p-6 shadow-2xl border-6 border-indigo-200 flex flex-col items-center justify-center transition transform hover:scale-102 active:scale-95 cursor-pointer min-h-[260px] md:min-h-[320px]">
+                    <img id="img-1" src="" alt="Choice 2" class="max-h-56 md:max-h-68 object-contain pointer-events-none">
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Spacer -->
+        <div class="z-20 h-10"></div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- GAME OVER SCREEN                           -->
+    <!-- ========================================== -->
+    <div id="gameover-screen" class="absolute inset-0 z-30 flex flex-col items-center justify-center p-8 bg-indigo-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="bg-indigo-900 border-6 border-yellow-400 rounded-3xl p-10 md:p-14 shadow-2xl flex flex-col items-center text-center max-w-2xl w-full">
+            <h2 class="text-5xl md:text-6xl font-black text-yellow-300 mb-4">Time's Up! 🎉</h2>
+            <p class="text-2xl md:text-3xl text-white font-bold mb-6">Great Job Playing!</p>
+            <div class="bg-indigo-950 px-8 py-6 rounded-2xl border-4 border-indigo-400 mb-10 w-full flex flex-col items-center">
+                <span class="text-xl md:text-2xl text-indigo-200 font-bold mb-2">Final Score</span>
+                <span id="final-score" class="text-6xl md:text-7xl font-black text-yellow-400">0</span>
+            </div>
+            <button onclick="restartGame()" class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-3xl md:text-4xl px-14 py-5 rounded-2xl shadow-xl border-4 border-white transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                Play Again 🔄
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC                           -->
+    <!-- ========================================== -->
+    <script>
+        // --- CONFIGURATION & VOCABULARY DATA ---
+        const vocabList = [
+            { word: 'eat', audio: 'eat.mp3', image: 'eat.png' },
+            { word: 'tea', audio: 'tea.mp3', image: 'tea.png' },
+            { word: 'meal', audio: 'meal.mp3', image: 'meal.png' },
+            { word: 'read', audio: 'read.mp3', image: 'read.png' },
+            { word: 'see', audio: 'see.mp3', image: 'see.png' },
+            { word: 'week', audio: 'week.mp3', image: 'week.png' },
+            { word: 'feet', audio: 'feet.mp3', image: 'feet.png' },
+            { word: 'tree', audio: 'tree.mp3', image: 'tree.png' }
+        ];
+
+        // --- GAME STATE ---
+        let score = 0;
+        let timeLeft = 90;
+        let timerInterval = null;
+        let isPlaying = false;
+        let currentTarget = null;
+        let currentDistractor = null;
+        let currentChoices = []; // Array of two items
+        let lastTargetWord = null;
+        let canAnswer = true;
+
+        // --- AUDIO MANAGEMENT ---
+        let audioElements = {};
+        let activeVocabAudio = null;
+        let audioContext = null;
+        let bgmInterval = null;
+
+        // Initialize audio elements for each vocabulary word
+        vocabList.forEach(item => {
+            const audio = new Audio(item.audio);
+            audio.preload = 'auto';
+            audioElements[item.word] = audio;
+        });
+
+        // Initialize Web Audio API for background music and synthesized SFX
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // --- SYNTHESIZED SOUND EFFECTS ---
+        // Play correct answer chime (pleasant rising arpeggio)
+        function playCorrectSound() {
+            try {
+                initAudioContext();
+                const now = audioContext.currentTime;
+                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach((freq, index) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.08);
+                    gain.gain.setValueAtTime(0.15, now + index * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start(now + index * 0.08);
+                    osc.stop(now + index * 0.08 + 0.3);
+                });
+            } catch (e) {
+                console.log("AudioContext SFX error:", e);
+            }
+        }
+
+        // Play incorrect answer buzzer (low pitch square wave buzz)
+        function playIncorrectSound() {
+            try {
+                initAudioContext();
+                const now = audioContext.currentTime;
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(130.81, now); // C3
+                osc.frequency.setValueAtTime(110.0, now + 0.15); // A2
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } catch (e) {
+                console.log("AudioContext SFX error:", e);
+            }
+        }
+
+        // --- BACKGROUND MUSIC (Web Audio API) ---
+        let isBgmActive = false;
+
+        function startBGM() {
+            initAudioContext();
+            if (isBgmActive) return;
+            isBgmActive = true;
+
+            // Simple child-friendly pentatonic melody loop
+            const melody = [261.63, 293.66, 329.63, 392.00, 440.00, 392.00, 329.63, 293.66];
+            let noteIndex = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!isPlaying || !isBgmActive) return;
+                try {
+                    const now = audioContext.currentTime;
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(melody[noteIndex], now);
+
+                    // 10% volume as requested
+                    gain.gain.setValueAtTime(0.02, now);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+
+                    noteIndex = (noteIndex + 1) % melody.length;
+                } catch (e) {
+                    // Ignore background audio errors if tab is inactive
+                }
+            }, 500);
+        }
+
+        function stopBGM() {
+            isBgmActive = false;
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        // --- AUDIO PLAYBACK WITH DUCKING ---
+        function playTargetAudio() {
+            if (!currentTarget) return;
+
+            // Stop any currently playing vocab audio
+            if (activeVocabAudio) {
+                activeVocabAudio.pause();
+                activeVocabAudio.currentTime = 0;
+            }
+
+            const audio = audioElements[currentTarget.word];
+            if (audio) {
+                activeVocabAudio = audio;
+                audio.currentTime = 0;
+
+                // Duck background music volume temporarily
+                isBgmActive = false;
+
+                audio.play().then(() => {
+                    audio.onended = () => {
+                        if (isPlaying) isBgmActive = true;
+                    };
+                }).catch(err => {
+                    console.log("Audio play failed:", err);
+                    if (isPlaying) isBgmActive = true;
+                });
+            }
+        }
+
+        // --- FULLSCREEN API ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log("Error attempting to enable fullscreen:", err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // --- GAMEFLOW FUNCTIONS ---
+        function startGame() {
+            initAudioContext();
+            document.getElementById('home-screen').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('game-screen').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('gameover-screen').classList.add('opacity-0', 'pointer-events-none');
+
+            score = 0;
+            timeLeft = 90;
+            lastTargetWord = null;
+            isPlaying = true;
+            canAnswer = true;
+
+            updateScoreDisplay();
+            updateTimerDisplay();
+
+            startBGM();
+            loadNewQuestion();
+
+            // Start countdown timer
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isPlaying) return;
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function endGame() {
+            isPlaying = false;
+            canAnswer = false;
+            if (timerInterval) clearInterval(timerInterval);
+            stopBGM();
+
+            if (activeVocabAudio) {
+                activeVocabAudio.pause();
+                activeVocabAudio.currentTime = 0;
+            }
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('gameover-screen').classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        // --- RANDOMIZATION & QUESTION LOADING ---
+        function loadNewQuestion() {
+            if (!isPlaying) return;
+            canAnswer = true;
+
+            // 1. Randomly select target vocabulary word obeying no-back-to-back rule
+            let availableTargets = vocabList.filter(item => item.word !== lastTargetWord);
+            let targetIndex = Math.floor(Math.random() * availableTargets.length);
+            currentTarget = availableTargets[targetIndex];
+            lastTargetWord = currentTarget.word;
+
+            // 2. Randomly select distractor from the other 7 words
+            let otherWords = vocabList.filter(item => item.word !== currentTarget.word);
+            let distractorIndex = Math.floor(Math.random() * otherWords.length);
+            currentDistractor = otherWords[distractorIndex];
+
+            // 3. Randomize left-right positions
+            if (Math.random() < 0.5) {
+                currentChoices = [currentTarget, currentDistractor];
+            } else {
+                currentChoices = [currentDistractor, currentTarget];
+            }
+
+            // 4. Update UI images
+            document.getElementById('img-0').src = currentChoices[0].image;
+            document.getElementById('img-1').src = currentChoices[1].image;
+
+            // Reset button borders
+            document.getElementById('choice-0').className = "bg-white/90 hover:bg-white rounded-3xl p-6 shadow-2xl border-6 border-indigo-200 flex flex-col items-center justify-center transition transform hover:scale-102 active:scale-95 cursor-pointer min-h-[260px] md:min-h-[320px]";
+            document.getElementById('choice-1').className = "bg-white/90 hover:bg-white rounded-3xl p-6 shadow-2xl border-6 border-indigo-200 flex flex-col items-center justify-center transition transform hover:scale-102 active:scale-95 cursor-pointer min-h-[260px] md:min-h-[320px]";
+
+            // 5. Play target audio automatically
+            playTargetAudio();
+        }
+
+        // --- ANSWER SELECTION & FEEDBACK ---
+        function handleChoice(selectedIndex) {
+            if (!isPlaying || !canAnswer) return;
+            canAnswer = false; // Prevent multiple taps
+
+            const chosenItem = currentChoices[selectedIndex];
+            const choiceBtn = document.getElementById(`choice-${selectedIndex}`);
+
+            if (chosenItem.word === currentTarget.word) {
+                // Correct Answer
+                score++;
+                updateScoreDisplay();
+                playCorrectSound();
+                choiceBtn.className = "bg-green-100 rounded-3xl p-6 shadow-2xl border-6 border-green-500 flex flex-col items-center justify-center transition transform scale-105 cursor-pointer min-h-[260px] md:min-h-[320px]";
+            } else {
+                // Incorrect Answer (gentle feedback without deducting points)
+                playIncorrectSound();
+                choiceBtn.className = "bg-red-100 rounded-3xl p-6 shadow-2xl border-6 border-red-500 flex flex-col items-center justify-center transition transform scale-95 cursor-pointer min-h-[260px] md:min-h-[320px]";
+                
+                // Also highlight the correct one gently
+                const correctIndex = currentChoices.findIndex(item => item.word === currentTarget.word);
+                document.getElementById(`choice-${correctIndex}`).className = "bg-green-50 rounded-3xl p-6 shadow-2xl border-6 border-green-400 flex flex-col items-center justify-center transition transform cursor-pointer min-h-[260px] md:min-h-[320px]";
+            }
+
+            // Automatically proceed to next question after brief feedback delay
+            setTimeout(() => {
+                if (isPlaying) {
+                    loadNewQuestion();
+                }
+            }, 1000);
+        }
+
+        // --- UI HELPERS ---
+        function updateScoreDisplay() {
+            document.getElementById('score-display').innerText = score;
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timer-display').innerText = timeLeft;
+        }
+    </script>
+</body>
+</html>
